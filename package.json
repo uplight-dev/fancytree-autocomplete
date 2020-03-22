@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx serve ./test"
+    "start": "npx serve ./"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/dev4light/fancytree-autocomplete#readme",
   "dependencies": {
-    "jquery.fancytree": "^2.34.0"
+    "jquery.fancytree": "^2.34.0",
+    "jquery": "^3.4.1",
+    "jquery-ui": "1.12.1"
   }
 }

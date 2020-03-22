@@ -35,13 +35,64 @@
 })(function($) {
 	"use strict";
 
+	const editStartSuper = $.ui.fancytree._FancytreeNodeClass.prototype.editStart;
+	const editEndSuper = $.ui.fancytree._FancytreeNodeClass.prototype.editEnd;
+
+	$.ui.fancytree.AutoComplete = {};
+	$.ui.fancytree.AutoComplete.autocomplete = null;
+
+	const countries = [
+        'France',
+        'Germany',
+        'United Kingdom'
+      ]
+
 	$.ui.fancytree._FancytreeNodeClass.prototype.editStart = function() {
-		this._superApply(arguments);
+		editStartSuper.call(this);
 
 		var localEdit = this.tree.ext.edit,
-		  	input = localEdit.eventData.input;
+			local = this.tree.ext.autocomplete,
+			input = localEdit.eventData.input,
+			_this = this;
 
-		
+		input && input.length == 1 &&
+			  input.on('keydown', (e) => {
+				  if (e.ctrlKey && e.keyCode == 32) {//Space
+					  local.atcInput = input;
+
+					  /*var atcParent = $.ui.fancytree.AutoComplete.atcParent;
+					  if (atcParent == null) {
+						atcParent = $("<div></div>")
+							.css('background-color', 'yellow')
+							.css('position', 'absolute')
+							.position({
+								my: "left top",
+								at: "left bottom",
+								//each tree node has a Span element
+								of: $(_this.span)
+							});
+						$(document.body).append(atcParent);
+						$.ui.fancytree.AutoComplete.atcParent = atcParent;
+					  }*/
+					  var atc = $( input ).autocomplete({
+						autofocus: true,
+						minLength: 0,
+						source: [ "c++", "java", "php", "coldfusion", "javascript", "asp", "ruby" ]
+					  });
+					  atc.autocomplete("search", "ja");
+				  }
+			  });
+	}
+
+	$.ui.fancytree._FancytreeNodeClass.prototype.editEnd = function(applyChanges, _event) {
+		editEndSuper.call(this, applyChanges, _event);
+
+		var local = this.tree.ext.autocomplete;
+
+		var atcInput = local.atcInput;
+		atcInput && $(atcInput).off('keydown');
+		$( input ).autocomplete("close");
+		local.atcInput = null;
 	}
 
 	/*******************************************************************************
@@ -57,40 +108,6 @@
 
 		// Vars
 		atcInput: null, //Autocomplete input
-
-		_getAtcInput: function() {
-			var extOpts = this._local._extOpts();
-			return extOpts.atcInput;
-		},
-
-		_setAtcInput: function(atcInput) {
-			var extOpts = this._local._extOpts();
-			extOpts.atcInput = atcInput;
-		},
-
-		_extOpts: function() {
-			return this.tree.ext.autocomplete;
-		},
-
-		// Default options for this extension.
-		options: {
-			edit: {
-				close: (e, data) => {
-					var atcInput = this._local._getAtcInput();
-					atcInput && $(atcInput).off('keydown');
-					this._local._setAtcInput(null);
-				},
-				edit: (e,data) => {
-					data.input && data.input.length == 1 &&
-							(ed = data.input) && ed.on('keydown', (e) => {
-								if (e.ctrlKey && e.keyCode == 32) {//Space
-									setAtcInput(ed.get(0));
-								}
-							});
-				}
-			}
-		},
-
 		treeInit: function(ctx) {
 			// gridnav requires the edit extension to be loaded before itself
 			this._requireExtension("edit", true, true);

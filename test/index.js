@@ -1,6 +1,6 @@
 $(function(){
   $("#tree").fancytree({
-      extensions: ["edit", "autocomplete"]
+      extensions: ["edit", "autocomplete"],
       checkbox: true,
       source: [
           {title: "Node 1"},
