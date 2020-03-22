@@ -5,6 +5,7 @@ import '.   /jquery.fancytree/dist/modules/jquery.fancytree.edit';
 const tree = createTree('#tree', {
   extensions: ['edit'],
   source: [
+    
     {title: "Node 1", key: "1"},
     {title: "Folder 2", key: "2", folder: true, children: [
       {title: "Node 2.1", key: "3"},
