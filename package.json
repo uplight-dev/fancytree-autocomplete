@@ -1,0 +1,22 @@
+{
+  "name": "fancytree-autocomplete",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx serve ./test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dev4light/fancytree-autocomplete.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dev4light/fancytree-autocomplete/issues"
+  },
+  "homepage": "https://github.com/dev4light/fancytree-autocomplete#readme",
+  "dependencies": {
+    "jquery.fancytree": "^2.34.0"
+  }
+}
