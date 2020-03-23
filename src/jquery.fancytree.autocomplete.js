@@ -70,8 +70,7 @@
 
 						$(document.body).append(atcParent);
 
-						atc = completely(atcParent.get(0), {
-							input: input.get(0),
+						atc = completely(input.get(0), {
 							promptInnerHTML : '&gt;&gt;&gt;', 
 							fontSize: '14px',
 							fontFamily:'monospace'
@@ -83,12 +82,6 @@
 							of: $(_this.span)
 						});
 						atc.options = ["Appartment", "Appartment.rooms", "Appartment.price"];
-						atc.onEnter = () => {
-							editEndSuper.bind(_this)(true, evData);
-						};
-						atc.onTab = () => {
-							editEndSuper.bind(_this)(true, evData);
-						};
 
 						ATC.atcParent = atcParent;
 						ATC.atc = atc;
@@ -102,7 +95,6 @@
 							of: $(_this.span)
 						});
 						atc.repaint();
-						atc.input.focus();
 						atc.input.selectionStart = atc.input.selectionEnd = atc.input.value.length;
 					  }, 100);
 				  }
