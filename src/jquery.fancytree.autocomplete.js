@@ -19,14 +19,10 @@
 		define([
 			"jquery",
 			"./jquery.fancytree",
-			"./jquery.fancytree.edit",
-			"./accessible-autocomplete"
 		], factory);
 	} else if (typeof module === "object" && module.exports) {
 		// Node/CommonJS
 		require("./jquery.fancytree");
-		require("./jquery.fancytree.edit");
-		require("./accessible-autocomplete");
 		module.exports = factory(require("jquery"));
 	} else {
 		// Browser globals
@@ -41,10 +37,9 @@
 	$.ui.fancytree.AutoComplete = {};
 
 	const countries = [
-        'France',
-        'Germany',
-        'United Kingdom'
-      ]
+		{ label: 'United Kingdom', value: 'UK' },
+		{ label: 'United States', value: 'US' }
+	];
 
 	$.ui.fancytree._FancytreeNodeClass.prototype.editStart = function() {
 		editStartSuper.apply(this, arguments);
@@ -52,11 +47,10 @@
 		var localEdit = this.tree.ext.edit,
 			local = this.tree.ext.autocomplete,
 			evData = localEdit.eventData,
-			input = evData.input,
+			input = evData.input.get(0),
 			_this = this;
 
-		input && input.length == 1 &&
-			  input.on('keydown', (e) => {
+		 $(input).on('keydown', (e) => {
 				  if (e.ctrlKey && e.keyCode == 32) {//Space
 					  local.atcInput = input;
 
@@ -70,33 +64,31 @@
 
 						$(document.body).append(atcParent);
 
-						atc = completely(input.get(0), {
-							promptInnerHTML : '&gt;&gt;&gt;', 
-							fontSize: '14px',
-							fontFamily:'monospace'
+						atc = autocomplete({
+							input: input,
+							fetch: function(text, update) {
+								text = text.toLowerCase();
+								// you can also use AJAX requests instead of preloaded data
+								var suggestions = countries.filter(n => n.label.toLowerCase().indexOf(text) >= 0)
+								update(suggestions);
+							},
+							onSelect: function(item) {
+								input.value = item.label;
+							}
 						});
-						atcParent.position({
-							my: "left top",
-							at: "left top",
-							//each tree node has a Span element
-							of: $(_this.span)
-						});
+						// atcParent.position({
+						// 	my: "left top",
+						// 	at: "left top",
+						// 	//each tree node has a Span element
+						// 	of: $(_this.span)
+						// });
 						atc.options = ["Appartment", "Appartment.rooms", "Appartment.price"];
 
 						ATC.atcParent = atcParent;
 						ATC.atc = atc;
 					  }
 					 
-					  setTimeout(() => {
-						ATC.atcParent.position({
-							my: "left top",
-							at: "left top",
-							//each tree node has a Span element
-							of: $(_this.span)
-						});
-						atc.repaint();
-						atc.input.selectionStart = atc.input.selectionEnd = atc.input.value.length;
-					  }, 100);
+					//atc.input.selectionStart = atc.input.selectionEnd = atc.input.value.length;  
 				  }
 			  });
 	}
