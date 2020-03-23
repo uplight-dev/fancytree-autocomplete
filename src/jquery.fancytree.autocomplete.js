@@ -39,7 +39,6 @@
 	const editEndSuper = $.ui.fancytree._FancytreeNodeClass.prototype.editEnd;
 
 	$.ui.fancytree.AutoComplete = {};
-	$.ui.fancytree.AutoComplete.autocomplete = null;
 
 	const countries = [
         'France',
@@ -48,11 +47,12 @@
       ]
 
 	$.ui.fancytree._FancytreeNodeClass.prototype.editStart = function() {
-		editStartSuper.call(this);
+		editStartSuper.apply(this, arguments);
 
 		var localEdit = this.tree.ext.edit,
 			local = this.tree.ext.autocomplete,
-			input = localEdit.eventData.input,
+			evData = localEdit.eventData,
+			input = evData.input,
 			_this = this;
 
 		input && input.length == 1 &&
@@ -60,41 +60,70 @@
 				  if (e.ctrlKey && e.keyCode == 32) {//Space
 					  local.atcInput = input;
 
-					  /*var atcParent = $.ui.fancytree.AutoComplete.atcParent;
-					  if (atcParent == null) {
-						atcParent = $("<div></div>")
+					  const ATC = $.ui.fancytree.AutoComplete;
+					  var atc = ATC.atc;
+					  if (atc == null) {
+						var atcParent = $("<div></div>")
 							.css('background-color', 'yellow')
-							.css('position', 'absolute')
-							.position({
-								my: "left top",
-								at: "left bottom",
-								//each tree node has a Span element
-								of: $(_this.span)
-							});
+							.css('border', "1px solid black")
+							.css('position', 'absolute');
+
 						$(document.body).append(atcParent);
-						$.ui.fancytree.AutoComplete.atcParent = atcParent;
-					  }*/
-					  var atc = $( input ).autocomplete({
-						autofocus: true,
-						minLength: 0,
-						source: [ "c++", "java", "php", "coldfusion", "javascript", "asp", "ruby" ]
-					  });
-					  atc.autocomplete("search", "ja");
+
+						atc = completely(atcParent.get(0), {
+							input: input.get(0),
+							promptInnerHTML : '&gt;&gt;&gt;', 
+							fontSize: '14px',
+							fontFamily:'monospace'
+						});
+						atcParent.position({
+							my: "left top",
+							at: "left top",
+							//each tree node has a Span element
+							of: $(_this.span)
+						});
+						atc.options = ["Appartment", "Appartment.rooms", "Appartment.price"];
+						atc.onEnter = () => {
+							editEndSuper.bind(_this)(true, evData);
+						};
+						atc.onTab = () => {
+							editEndSuper.bind(_this)(true, evData);
+						};
+
+						ATC.atcParent = atcParent;
+						ATC.atc = atc;
+					  }
+					 
+					  setTimeout(() => {
+						ATC.atcParent.position({
+							my: "left top",
+							at: "left top",
+							//each tree node has a Span element
+							of: $(_this.span)
+						});
+						atc.repaint();
+						atc.input.focus();
+						atc.input.selectionStart = atc.input.selectionEnd = atc.input.value.length;
+					  }, 100);
 				  }
 			  });
 	}
 
 	$.ui.fancytree._FancytreeNodeClass.prototype.editEnd = function(applyChanges, _event) {
-		editEndSuper.call(this, applyChanges, _event);
+		editEndSuper.apply(this, arguments);
 
 		var local = this.tree.ext.autocomplete;
+		var ATC = $.ui.fancytree.AutoComplete;
 
-		var atcInput = local.atcInput;
+		var atcInput = ATC.atcInput;
 		atcInput && $(atcInput).off('keydown');
-		$( input ).autocomplete("close");
-		local.atcInput = null;
-	}
 
+		if (ATC.atc != null) {
+			$(ATC.atc.wrapper).remove();
+			ATC.atc = null;
+		}
+	}
+	
 	/*******************************************************************************
 	 * Private functions and variables
 	 */
