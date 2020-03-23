@@ -6,9 +6,8 @@
  * This Software shall be used for doing good things, not bad things.
  * 
 **/  
-function completely(container, config) {
+function completely(input, config) {
     config = config || {};
-    config.input = config.input || document.createElement('input');
     config.fontSize =                       config.fontSize   || '8px';
     config.fontFamily =                     config.fontFamily || 'verdana';
     config.promptInnerHTML =                config.promptInnerHTML || ''; 
@@ -18,9 +17,10 @@ function completely(container, config) {
     config.dropDownBorderColor =            config.dropDownBorderColor || '#aaa';
     config.dropDownZIndex =                 config.dropDownZIndex || '100'; // to ensure we are in front of everybody
     config.dropDownOnHoverBackgroundColor = config.dropDownOnHoverBackgroundColor || '#ddd';
-    
+
     var txtInput = config.input;
-    txtInput.type ='text';
+    //txtInput.style.width = '100%';
+    /*txtInput.type ='text';
     txtInput.spellcheck = false; 
     txtInput.style.fontSize =        config.fontSize;
     txtInput.style.fontFamily =      config.fontFamily;
@@ -31,7 +31,10 @@ function completely(container, config) {
     txtInput.style.border =  '0';
     txtInput.style.margin =  '0';
     txtInput.style.padding = '0';
-    
+    txtInput.style.backgroundColor ='transparent';
+    txtInput.style.verticalAlign = 'top';
+    txtInput.style.position = 'relative';*/
+
     var txtHint = txtInput.cloneNode(); 
     txtHint.disabled='';        
     txtHint.style.position = 'absolute';
@@ -40,45 +43,20 @@ function completely(container, config) {
     txtHint.style.borderColor = 'transparent';
     txtHint.style.boxShadow =   'none';
     txtHint.style.color = config.hintColor;
-    
-    txtInput.style.backgroundColor ='transparent';
-    txtInput.style.verticalAlign = 'top';
-    txtInput.style.position = 'relative';
-    
+        
     var wrapper = document.createElement('div');
-    wrapper.style.position = 'relative';
+    /*wrapper.style.position = 'relative';
     wrapper.style.outline = '0';
     wrapper.style.border =  '0';
     wrapper.style.margin =  '0';
-    wrapper.style.padding = '0';
+    wrapper.style.padding = '0';*/
     
-    var prompt = document.createElement('div');
-    prompt.style.position = 'absolute';
-    prompt.style.outline = '0';
-    prompt.style.margin =  '0';
-    prompt.style.padding = '0';
-    prompt.style.border =  '0';
-    prompt.style.fontSize =   config.fontSize;
-    prompt.style.fontFamily = config.fontFamily;
-    prompt.style.color =           config.color;
-    prompt.style.backgroundColor = config.backgroundColor;
-    prompt.style.top = '0';
-    prompt.style.left = '0';
-    prompt.style.overflow = 'hidden';
-    prompt.innerHTML = config.promptInnerHTML;
-    prompt.style.background = 'transparent';
     if (document.body === undefined) {
         throw 'document.body is undefined. The library was wired up incorrectly.';
     }
-    document.body.appendChild(prompt);            
-    var w = prompt.getBoundingClientRect().right; // works out the width of the prompt.
-    wrapper.appendChild(prompt);
-    prompt.style.visibility = 'visible';
-    prompt.style.left = '-'+w+'px';
-    wrapper.style.marginLeft= w+'px';
     
     wrapper.appendChild(txtHint);
-    wrapper.appendChild(txtInput);
+    //wrapper.appendChild(txtInput);
     
     var dropDown = document.createElement('div');
     dropDown.style.position = 'absolute';
