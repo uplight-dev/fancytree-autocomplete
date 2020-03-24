@@ -31,32 +31,36 @@
 })(function($) {
 	"use strict";
 
-	const editStartSuper = $.ui.fancytree._FancytreeNodeClass.prototype.editStart;
-	const editEndSuper = $.ui.fancytree._FancytreeNodeClass.prototype.editEnd;
-
-	$.ui.fancytree.AutoComplete = {};
-
-	const countries = [
-		{ label: 'United Kingdom', value: 'UK' },
-		{ label: 'United States', value: 'US' }
+	const data = [
+		{ label: 'House', value: 'HS' },
+		{ label: 'House.rooms', value: 'HSR' },
+		{ label: 'House.price', value: 'HSP' }
 	];
 
-	$.ui.fancytree._FancytreeNodeClass.prototype.editStart = function() {
-		editStartSuper.apply(this, arguments);
+	function _getATC(tree) {
+		return tree.ext.autocomplete;
+	}
 
-		var localEdit = this.tree.ext.edit,
-			local = this.tree.ext.autocomplete,
-			evData = localEdit.eventData,
+	function _fnExt(baseFn, fn) {
+		this._superFn = baseFn;
+		return function() {
+			return fn.apply(arguments);
+		}
+	}
+
+	var FN = $.ui.fancytree._FancytreeNodeClass.prototype.editStart = _fnExt(
+		FN,
+		function() {
+		FN._superFn.apply(this, arguments);
+
+		const ATC = _getATC(this.tree);
+		var evData = localEdit.eventData,
 			input = evData.input.get(0),
 			_this = this;
 
 		 $(input).on('keydown', (e) => {
 				  if (e.ctrlKey && e.keyCode == 32) {//Space
-					  local.atcInput = input;
-
-					  const ATC = $.ui.fancytree.AutoComplete;
-					  var atc = ATC.atc;
-					  if (atc == null) {
+					  if (ATC.atc == null) {
 						var atcParent = $("<div></div>")
 							.css('background-color', 'yellow')
 							.css('border', "1px solid black")
@@ -64,47 +68,36 @@
 
 						$(document.body).append(atcParent);
 
-						atc = autocomplete({
+						ATC.atc = autocomplete({
 							input: input,
 							fetch: function(text, update) {
 								text = text.toLowerCase();
 								// you can also use AJAX requests instead of preloaded data
-								var suggestions = countries.filter(n => n.label.toLowerCase().indexOf(text) >= 0)
+								var suggestions = data.filter(n => n.label.toLowerCase().indexOf(text) >= 0)
 								update(suggestions);
 							},
 							onSelect: function(item) {
-								input.value = item.label;
+								atc.value = item.label;
 							}
 						});
-						// atcParent.position({
-						// 	my: "left top",
-						// 	at: "left top",
-						// 	//each tree node has a Span element
-						// 	of: $(_this.span)
-						// });
-						atc.options = ["Appartment", "Appartment.rooms", "Appartment.price"];
 
+						ATC.atcInput = input;
 						ATC.atcParent = atcParent;
 						ATC.atc = atc;
-					  }
-					 
-					//atc.input.selectionStart = atc.input.selectionEnd = atc.input.value.length;  
+					  }					 
 				  }
 			  });
-	}
+	});
 
 	$.ui.fancytree._FancytreeNodeClass.prototype.editEnd = function(applyChanges, _event) {
-		editEndSuper.apply(this, arguments);
+		const ATC = _getATC(this.tree);
 
-		var local = this.tree.ext.autocomplete;
-		var ATC = $.ui.fancytree.AutoComplete;
-
-		var atcInput = ATC.atcInput;
-		atcInput && $(atcInput).off('keydown');
-
-		if (ATC.atc != null) {
-			$(ATC.atc.wrapper).remove();
-			ATC.atc = null;
+		ATC.editEndSuper.apply(this, arguments);
+		
+		ATC.atcInput && $(ATC.atcInput).off('keydown');
+		if (ATC.value != null) {
+			ATC.atcInput.value = ATC.value;
+			ATC.value = null;
 		}
 	}
 	
@@ -119,14 +112,13 @@
 		name: "autocomplete",
 		version: "1.0.0",
 
-		// Vars
-		atcInput: null, //Autocomplete input
 		treeInit: function(ctx) {
-			// gridnav requires the edit extension to be loaded before itself
+			const ATC = _getATC(ctx.tree);
+
 			this._requireExtension("edit", true, true);
 			this._superApply(arguments);
 		}
 	});
-	// Value returned by `require('jquery.fancytree..')`
+
 	return $.ui.fancytree;
-}); // End of closure
+});
