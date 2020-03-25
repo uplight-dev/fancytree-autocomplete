@@ -42,33 +42,33 @@
 	}
 
 	function _fnExt(baseFn, fn) {
-		this._superFn = baseFn;
 		return function() {
-			return fn.apply(arguments);
+			this._superFn = baseFn;
+			return fn.apply(this, arguments);
 		}
 	}
 
-	var FN = $.ui.fancytree._FancytreeNodeClass.prototype.editStart = _fnExt(
-		FN,
+	$.ui.fancytree._FancytreeNodeClass.prototype.editStart = _fnExt(
+		$.ui.fancytree._FancytreeNodeClass.prototype.editStart,
 		function() {
-		FN._superFn.apply(this, arguments);
+			var ret = this._superFn.apply(this, arguments);
 
-		const ATC = _getATC(this.tree);
-		var evData = localEdit.eventData,
-			input = evData.input.get(0),
-			_this = this;
+			const ATC = _getATC(this.tree);
+			const localEdit = this.tree.ext.edit;
+			var evData = localEdit.eventData,
+				input = evData.input.get(0),
+				_this = this;
 
-		 $(input).on('keydown', (e) => {
-				  if (e.ctrlKey && e.keyCode == 32) {//Space
-					  if (ATC.atc == null) {
-						var atcParent = $("<div></div>")
-							.css('background-color', 'yellow')
-							.css('border', "1px solid black")
-							.css('position', 'absolute');
+			ATC.active = false;
 
-						$(document.body).append(atcParent);
-
+			$(input).on('keydown', (e) => {
+					if (e.ctrlKey && e.keyCode == 32) {//Space
+						ATC.input = input;
+						ATC.active = true;
 						ATC.atc = autocomplete({
+							minLength: 0,
+							showOnFocus: false,
+							preventSubmit: true,
 							input: input,
 							fetch: function(text, update) {
 								text = text.toLowerCase();
@@ -76,30 +76,38 @@
 								var suggestions = data.filter(n => n.label.toLowerCase().indexOf(text) >= 0)
 								update(suggestions);
 							},
+							render: function(item, v) {
+								return $('<div><img src="https://addons.thunderbird.net/user-media/addon_icons/327/327423-64.png"></img>'+item.label+'</div>').get(0)
+							},
 							onSelect: function(item) {
-								atc.value = item.label;
+								ATC.input.value = item.label;
+							},
+							onClose: function() {
+								ATC.active = false;
+								ATC.atc.destroy();
+								ATC.atc = null;
 							}
 						});
+					}
+			});
 
-						ATC.atcInput = input;
-						ATC.atcParent = atcParent;
-						ATC.atc = atc;
-					  }					 
-				  }
-			  });
-	});
-
-	$.ui.fancytree._FancytreeNodeClass.prototype.editEnd = function(applyChanges, _event) {
-		const ATC = _getATC(this.tree);
-
-		ATC.editEndSuper.apply(this, arguments);
-		
-		ATC.atcInput && $(ATC.atcInput).off('keydown');
-		if (ATC.value != null) {
-			ATC.atcInput.value = ATC.value;
-			ATC.value = null;
+			return ret;
 		}
-	}
+	);
+
+	$.ui.fancytree._FancytreeNodeClass.prototype.editEnd = _fnExt(
+		$.ui.fancytree._FancytreeNodeClass.prototype.editEnd,
+		function(applyChanges, _event) {
+			const ATC = _getATC(this.tree);
+
+			if (!ATC.active) {
+				if (ATC.atc) {
+					ATC.input && $(ATC.input).off('keydown');
+				}
+				return this._superFn.apply(this, arguments);
+			}
+		}
+	);
 	
 	/*******************************************************************************
 	 * Private functions and variables
