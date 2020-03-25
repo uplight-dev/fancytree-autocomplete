@@ -1,13 +1,16 @@
 $(function(){
   $("#tree").fancytree({
-      extensions: ["edit", "autocomplete"],
+      extensions: ["edit", "autocomplete", "wide"],
       checkbox: true,
       source: [
-          {title: "Node 1"},
-          {title: "Node 2", key: "id2"},
-          {title: "Folder 3", folder: true, children: [
-              {title: "Node 3.1"},
-              {title: "Node 3.2"}
+          {title: "House"},
+          {title: "Appartment", key: "id2"},
+          {title: "Lorem", folder: true, children: [
+              {title: "Neque porro"},
+              {title: "quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit"},
+              {title: "qui dolorem"},
+              {title: "ipsum quia"},
+              {title: "dolor sit amet, consectetur, adipisci velit"}
           ]},
           {title: "Folder 2", folder: true}
       ],
