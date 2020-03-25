@@ -32,9 +32,16 @@
 	"use strict";
 
 	const data = [
-		{ label: 'House', value: 'HS' },
-		{ label: 'House.rooms', value: 'HSR' },
-		{ label: 'House.price', value: 'HSP' }
+		{ label: 'House.', value: '0' },
+		{ label: 'House.rooms', value: '99' },
+		{ label: 'House.price', value: '99' },
+		{ label: 'AWS.', value: '1' },
+		{ label: 'AWS.Product.', value: '2' },
+		{ label: 'AWS.Product.price', value: '99' },
+		{ label: 'AWS.Product.weight', value: '99' },
+		{ label: 'AWS.Product.delivery.', value: '3' },
+		{ label: 'AWS.Product.delivery.days', value: '99' },
+		{ label: 'AWS.Product.delivery.price', value: '99' }
 	];
 
 	function _getATC(tree) {
@@ -46,6 +53,58 @@
 			this._superFn = baseFn;
 			return fn.apply(this, arguments);
 		}
+	}
+	$.ui.fancytree._FancytreeNodeClass.prototype.autocomplete = function() {
+		const ATC = _getATC(this.tree);
+		const _this = this;
+
+		ATC.active = true;
+		ATC.atc = autocomplete({
+			minLength: 0,
+			showOnFocus: false,
+			preventSubmit: true,
+			input: ATC.input,
+			fetch: function(text, update) {
+				text = text.toLowerCase();
+				
+				// you can also use AJAX requests instead of preloaded data
+				var idx;
+				var suggestions = data.filter(n =>
+						n.label.length > text.length &&
+						(idx = n.label.toLowerCase().indexOf(text.toLowerCase()), 
+							//
+							(idx > 0) ||
+							//
+							(idx == 0 &&
+							((idx = n.label.substring(text.length).indexOf("."), idx+1 && (idx += text.length),  
+								idx == -1 || 
+							(idx == n.label.length - 1)))
+							)
+						));
+				update(suggestions);
+			},
+			render: function(item, v) {
+				const im = {
+					99: "https://www.wikipreneurs.be/uploads/img/tools/1529589473_Outils%2002.png",
+					0:"https://png.pngtree.com/png-clipart/20200225/original/pngtree-house-vector-illustration-isolated-on-white-background-house-cartoon-house-clip-png-image_5261981.jpg",
+					1:"https://addons.thunderbird.net/user-media/addon_icons/327/327423-64.png",
+					2:"https://image.shutterstock.com/image-vector/open-flat-box-260nw-657694141.jpg",
+					3:"https://png.pngtree.com/png-clipart/20200225/original/pngtree-clipart-of-the-large-goods-vehicle-truck-semi-tractor-trailers-png-image_5268760.jpg"
+				};
+				return $('<div><img style="height:48px" src="'+im[parseInt(item.value)]+'"></img>'+item.label+'</div>').get(0)
+			},
+			onSelect: function(item, input, isTab) {
+				ATC.input.value = item.label;
+				isTab && ATC.atc.startFetch();
+			},
+			onClose: function() {
+				ATC.active = false;
+				if (ATC.atc) {
+					ATC.atc.destroy();
+					ATC.atc = null;
+				}
+			}
+		});
 	}
 
 	$.ui.fancytree._FancytreeNodeClass.prototype.editStart = _fnExt(
@@ -60,34 +119,11 @@
 				_this = this;
 
 			ATC.active = false;
+			ATC.input = input;
 
 			$(input).on('keydown', (e) => {
 					if (e.ctrlKey && e.keyCode == 32) {//Space
-						ATC.input = input;
-						ATC.active = true;
-						ATC.atc = autocomplete({
-							minLength: 0,
-							showOnFocus: false,
-							preventSubmit: true,
-							input: input,
-							fetch: function(text, update) {
-								text = text.toLowerCase();
-								// you can also use AJAX requests instead of preloaded data
-								var suggestions = data.filter(n => n.label.toLowerCase().indexOf(text) >= 0)
-								update(suggestions);
-							},
-							render: function(item, v) {
-								return $('<div><img src="https://addons.thunderbird.net/user-media/addon_icons/327/327423-64.png"></img>'+item.label+'</div>').get(0)
-							},
-							onSelect: function(item) {
-								ATC.input.value = item.label;
-							},
-							onClose: function() {
-								ATC.active = false;
-								ATC.atc.destroy();
-								ATC.atc = null;
-							}
-						});
+						_this.autocomplete();
 					}
 			});
 

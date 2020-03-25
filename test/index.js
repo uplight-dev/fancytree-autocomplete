@@ -4,15 +4,14 @@ $(function(){
       checkbox: true,
       source: [
           {title: "House"},
-          {title: "Appartment", key: "id2"},
+          {title: "AWS", key: "id2"},
           {title: "Lorem", folder: true, children: [
               {title: "Neque porro"},
               {title: "quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit"},
               {title: "qui dolorem"},
               {title: "ipsum quia"},
               {title: "dolor sit amet, consectetur, adipisci velit"}
-          ]},
-          {title: "Folder 2", folder: true}
+          ]}
       ],
       activate: function(event, data){
           $("#status").text("Activate: " + data.node);

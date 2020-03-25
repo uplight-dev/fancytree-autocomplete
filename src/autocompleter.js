@@ -307,10 +307,12 @@
                 }
                 return;
             }
-            if (keyCode === 13 /* Enter */) {
+            if (keyCode === 13 /* Enter */ || keyCode === 9 /* Tab */) {
                 if (selected) {
-                    settings.onSelect(selected, input);
-                    clear();
+                    settings.onSelect(selected, input, keyCode === 9);
+                    if (keyCode !== 9) {
+                        clear();
+                    }
                 }
                 if (preventSubmit) {
                     ev.preventDefault();
@@ -389,7 +391,9 @@
         window.addEventListener("resize", resizeEventHandler);
         doc.addEventListener("scroll", scrollEventHandler, true);
         return {
-            destroy: destroy
+            destroy,
+            update,
+            startFetch
         };
     }
   
