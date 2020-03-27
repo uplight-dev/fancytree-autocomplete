@@ -32,16 +32,16 @@
 	"use strict";
 
 	const data = [
-		{ label: 'House.', value: '0' },
-		{ label: 'House.rooms', value: '99' },
-		{ label: 'House.price', value: '99' },
-		{ label: 'AWS.', value: '1' },
-		{ label: 'AWS.Product.', value: '2' },
-		{ label: 'AWS.Product.price', value: '99' },
-		{ label: 'AWS.Product.weight', value: '99' },
-		{ label: 'AWS.Product.delivery.', value: '3' },
-		{ label: 'AWS.Product.delivery.days', value: '99' },
-		{ label: 'AWS.Product.delivery.price', value: '99' }
+		{ value: 'House.', type: '0' },
+		{ value: 'House.rooms', type: '99' },
+		{ value: 'House.price', type: '99' },
+		{ value: 'AWS.', type: '1' },
+		{ value: 'AWS.Product.', type: '2' },
+		{ value: 'AWS.Product.price', type: '99' },
+		{ value: 'AWS.Product.weight', type: '99' },
+		{ value: 'AWS.Product.delivery.', type: '3' },
+		{ value: 'AWS.Product.delivery.days', type: '99' },
+		{ value: 'AWS.Product.delivery.price', type: '99' }
 	];
 
 	function _getATC(tree) {
@@ -59,52 +59,53 @@
 		const _this = this;
 
 		ATC.active = true;
-		ATC.atc = autocomplete({
-			minLength: 0,
-			showOnFocus: false,
-			preventSubmit: true,
-			input: ATC.input,
-			fetch: function(text, update) {
-				text = text.toLowerCase();
-				
-				// you can also use AJAX requests instead of preloaded data
-				var idx;
-				var suggestions = data.filter(n =>
-						n.label.length > text.length &&
-						(idx = n.label.toLowerCase().indexOf(text.toLowerCase()), 
-							//
-							(idx > 0) ||
-							//
-							(idx == 0 &&
-							((idx = n.label.substring(text.length).indexOf("."), idx+1 && (idx += text.length),  
-								idx == -1 || 
-							(idx == n.label.length - 1)))
-							)
-						));
-				update(suggestions);
+
+		var tagify = new Tagify(ATC.input, {
+			whitelist: data,
+			enforceWhitelist: false,
+			maxTags: 10,
+			mode: 'mix',
+			pattern: /@|#/,
+			autocomplete: {
+				rightKey: true
 			},
-			render: function(item, v) {
-				const im = {
-					99: "https://www.wikipreneurs.be/uploads/img/tools/1529589473_Outils%2002.png",
-					0:"https://png.pngtree.com/png-clipart/20200225/original/pngtree-house-vector-illustration-isolated-on-white-background-house-cartoon-house-clip-png-image_5261981.jpg",
-					1:"https://addons.thunderbird.net/user-media/addon_icons/327/327423-64.png",
-					2:"https://image.shutterstock.com/image-vector/open-flat-box-260nw-657694141.jpg",
-					3:"https://png.pngtree.com/png-clipart/20200225/original/pngtree-clipart-of-the-large-goods-vehicle-truck-semi-tractor-trailers-png-image_5268760.jpg"
-				};
-				return $('<div><img style="height:48px" src="'+im[parseInt(item.value)]+'"></img>'+item.label+'</div>').get(0)
+			dropdown: {
+				maxItems: 10,           // <- mixumum allowed rendered suggestions
+				classname: "tags-look", // <- custom classname for this dropdown, so it could be targeted
+				enabled: 0,             // <- show suggestions on focus
+				closeOnSelect: false,    // <- do not hide the suggestions dropdown once an item has been selected
+				position: 'text',
+				highlightFirst: true,
+				fuzzySearch: true
 			},
-			onSelect: function(item, input, isTab) {
-				ATC.input.value = item.label;
-				isTab && ATC.atc.startFetch();
-			},
-			onClose: function() {
-				ATC.active = false;
-				if (ATC.atc) {
-					ATC.atc.destroy();
-					ATC.atc = null;
+			templates: {
+				tag(value, tagData){
+					return `<tag title='${tagData.value || value}'
+							  contenteditable='false'
+							  spellcheck='false'
+							  tabIndex="-1"
+							  class='tagify__tag ${tagData.class ? tagData.class : ""}'
+							  ${this.getAttributes(tagData)}>
+						<x title='' class='tagify__tag__removeBtn' role='button' aria-label='remove tag'></x>
+						<div>
+							<span class='tagify__tag-text'>${value}</span>
+						</div>
+					</tag>`
 				}
 			}
+			// 	dropdownItem: function(tagData) {
+
+			// 	}
+			// }
+		}).on('blur', e => {
+			ATC.active = false;
+			if (ATC.atc) {
+				//ATC.atc.destroy();
+				//ATC.atc = null;
+			}
 		});
+		
+		ATC.atc = tagify;
 	}
 
 	$.ui.fancytree._FancytreeNodeClass.prototype.editStart = _fnExt(
@@ -136,12 +137,13 @@
 		function(applyChanges, _event) {
 			const ATC = _getATC(this.tree);
 
-			if (!ATC.active) {
-				if (ATC.atc) {
-					ATC.input && $(ATC.input).off('keydown');
-				}
-				return this._superFn.apply(this, arguments);
-			}
+			ATC.input && $(ATC.input).off('keydown');
+			/*if (ATC.atc) {
+				ATC.input && $(ATC.input).off('keydown');
+				ATC.atc.destroy();
+				ATC.atc = null;
+			}*/
+			//return this._superFn.apply(this, arguments);
 		}
 	);
 	
