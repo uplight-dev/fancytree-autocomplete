@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "nearley": "^2.19.1"
+    "chevrotain": "^7.0.0"
   }
 }
