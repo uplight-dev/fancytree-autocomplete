@@ -150,7 +150,7 @@ indexed_access
         %}
 
 boolean_expression
-    ->  expression _ boolean_operator _ expression
+    ->  expression _ boolean_operator _ identifier
         {%
             d => ({
                 type: "binary_operation",
