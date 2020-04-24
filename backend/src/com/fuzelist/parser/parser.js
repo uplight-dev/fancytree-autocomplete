@@ -17,10 +17,6 @@ const WhiteSpace = createToken({
   group: Lexer.SKIPPED
 })
 
-const If = createToken({ name: "If", pattern: /if/ })
-const Else = createToken({ name: "Else", pattern: /else/ })
-const While = createToken({ name: "While", pattern: /while/ })
-const Do = createToken({ name: "Do", pattern: /do/ })
 const LCurly = createToken({ name: "LCurly", pattern: /{/ })
 const RCurly = createToken({ name: "RCurly", pattern: /}/ })
 const LParen = createToken({ name: "LParen", pattern: /\(/ })
@@ -32,9 +28,9 @@ const Plus = createToken({ name: "Plus", pattern: /\+/ })
 const Minus = createToken({ name: "Minus", pattern: /-/ })
 const Mul = createToken({ name: "Mul", pattern: /\*/ })
 const Div = createToken({ name: "Div", pattern: /\// })
-const INT = createToken({ name: "INT", pattern: /[0-9]+/ })
+const INT = createToken({ name: "Int", pattern: /[+-]?(([1-9](_\d|\d)*)|0)/ })
 // TODO: resolve ambiguity keywords vs identifiers
-const ID = createToken({ name: "ID", pattern: /[a-z]+/ })
+const ID = createToken({ name: "ID", pattern: /[A-Za-z0-9_-]+/ })
 
 const TinyCLexer = new Lexer(allTokens)
 
@@ -88,7 +84,6 @@ class TinyCParser extends CstParser {
     $.RULE("relationExpression", () => {
       $.SUBRULE($.AdditionExpression)
       $.MANY(() => {
-        $.OR2()
         $.CONSUME(LessThan)
         $.SUBRULE2($.AdditionExpression)
       })
@@ -112,6 +107,12 @@ class TinyCParser extends CstParser {
 
     $.RULE("assignExpression", () => {
       $.CONSUME(ID)
+      $.CONSUME(Equals)
+      $.SUBRULE($.expression)
+    })
+
+    $.RULE("accessorExpression", () => {
+      $.CONSUME($.expression)
       $.CONSUME(Equals)
       $.SUBRULE($.expression)
     })
