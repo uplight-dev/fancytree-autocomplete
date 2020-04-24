@@ -1,6 +1,6 @@
 $(function(){
   $("#tree").fancytree({
-      extensions: ["edit", "autocomplete", "wide"],
+      extensions: ["edit", "annotator"],
       checkbox: true,
       source: [
           {title: "House"},
@@ -26,16 +26,4 @@ $(function(){
   });
   $("#version").text("Fancytree " + $.ui.fancytree.version
       + " / jQuery " + $.fn.jquery);
-});
-
-const tree = createTree('#tree', {
-  extensions: ['edit'],
-  source: [
-    
-    {title: "Node 1", key: "1"},
-    {title: "Folder 2", key: "2", folder: true, children: [
-      {title: "Node 2.1", key: "3"},
-      {title: "Node 2.2", key: "4"}
-    ]}
-  ]
 });
