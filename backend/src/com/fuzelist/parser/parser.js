@@ -30,6 +30,8 @@ const Equals = createToken({ name: "Equals", pattern: /=/ })
 const LessThan = createToken({ name: "LessThan", pattern: /</ })
 const Plus = createToken({ name: "Plus", pattern: /\+/ })
 const Minus = createToken({ name: "Minus", pattern: /-/ })
+const Mul = createToken({ name: "Mul", pattern: /\*/ })
+const Div = createToken({ name: "Div", pattern: /\// })
 const INT = createToken({ name: "INT", pattern: /[0-9]+/ })
 // TODO: resolve ambiguity keywords vs identifiers
 const ID = createToken({ name: "ID", pattern: /[a-z]+/ })
@@ -57,37 +59,10 @@ class TinyCParser extends CstParser {
 
     $.RULE("statement", () => {
       $.OR([
-        { ALT: () => $.SUBRULE($.ifStatement) },
-        { ALT: () => $.SUBRULE($.whileStatement) },
-        { ALT: () => $.SUBRULE($.doStatement) },
         { ALT: () => $.SUBRULE($.blockStatement) },
         { ALT: () => $.SUBRULE($.expressionStatement) },
         { ALT: () => $.SUBRULE($.emptyStatement) }
       ])
-    })
-
-    $.RULE("ifStatement", () => {
-      $.CONSUME(If)
-      $.SUBRULE($.paren_expr)
-      $.SUBRULE($.statement)
-      $.OPTION(() => {
-        $.CONSUME(Else)
-        $.SUBRULE2($.statement)
-      })
-    })
-
-    $.RULE("whileStatement", () => {
-      $.CONSUME(While)
-      $.SUBRULE($.paren_expr)
-      $.SUBRULE($.statement)
-    })
-
-    $.RULE("doStatement", () => {
-      $.CONSUME(Do)
-      $.SUBRULE($.statement)
-      $.CONSUME(While)
-      $.SUBRULE($.paren_expr)
-      $.CONSUME(SemiColon)
     })
 
     $.RULE("blockStatement", () => {
@@ -113,6 +88,7 @@ class TinyCParser extends CstParser {
     $.RULE("relationExpression", () => {
       $.SUBRULE($.AdditionExpression)
       $.MANY(() => {
+        $.OR2()
         $.CONSUME(LessThan)
         $.SUBRULE2($.AdditionExpression)
       })
@@ -122,6 +98,14 @@ class TinyCParser extends CstParser {
       $.SUBRULE($.term)
       $.MANY(() => {
         $.OR([{ ALT: () => $.CONSUME(Plus) }, { ALT: () => $.CONSUME(Minus) }])
+        $.SUBRULE2($.term)
+      })
+    })
+
+    $.RULE("MultiplyExpression", () => {
+      $.SUBRULE($.term)
+      $.MANY(() => {
+        $.OR([{ ALT: () => $.CONSUME(Mul) }, { ALT: () => $.CONSUME(Div) }])
         $.SUBRULE2($.term)
       })
     })
