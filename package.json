@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/dev4light/fancytree-autocomplete#readme",
   "dependencies": {
+    "annotator": "^2.0.0-alpha.3",
     "autocompleter": "^6.0.2",
     "jquery": "^3.4.1",
     "jquery-autocomplete": "^1.2.8",
