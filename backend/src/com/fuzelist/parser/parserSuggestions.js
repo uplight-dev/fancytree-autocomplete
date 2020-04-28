@@ -43,11 +43,14 @@ const parser = require("./parser")()
  * @param text {string} - The text content assist is requested immediately afterwards.
  * @param symbolTable {string[]} - List of available symbol names.
  */
-function getContentAssistSuggestions(text, symbolTable) {
+function getContentAssistSuggestions(text, symbolFinder) {
   const lexResult = parser.lexer.tokenize(text)
   if (lexResult.errors.length > 0) {
     throw new Error("sad sad panda, lexing errors detected")
   }
+
+  parser.parser.input = lexResult.tokens;
+  let parsed = parser.parser.start();
 
   const lastInputToken = _.last(lexResult.tokens)
   let partialSuggestionMode = false
@@ -76,9 +79,11 @@ function getContentAssistSuggestions(text, symbolTable) {
     const currRuleStack = currSyntaxSuggestion.ruleStack
     const lastRuleName = _.last(currRuleStack)
 
-    // easy case where a keyword is suggested.
-    if (parser.ID.categoryMatchesMap[currTokenType.tokenTypeIdx]) {
-      finalSuggestions.push(currTokenType.PATTERN.source)
+    if (currTokenType === parser.ID) {
+      let symbols = symbolFinder(currRuleStack);
+      finalSuggestions = finalSuggestions.concat(symbols);
+    } else {
+      finalSuggestions.push(currTokenType.PATTERN.source);
     }
   }
 
