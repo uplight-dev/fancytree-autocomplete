@@ -22,8 +22,11 @@ const RCurly = createToken({ name: "RCurly", pattern: /}/ })
 const LParen = createToken({ name: "LParen", pattern: /\(/ })
 const RParen = createToken({ name: "RParen", pattern: /\)/ })
 const SemiColon = createToken({ name: "SemiColon", pattern: /;/ })
+const Dot = createToken({ name: "Dot", pattern: /\./ })
 const Equals = createToken({ name: "Equals", pattern: /=/ })
+const NotEquals = createToken({ name: "NotEquals", pattern: /!=/ })
 const LessThan = createToken({ name: "LessThan", pattern: /</ })
+const GreaterThan = createToken({ name: "GreaterThan", pattern: />/ })
 const Plus = createToken({ name: "Plus", pattern: /\+/ })
 const Minus = createToken({ name: "Minus", pattern: /-/ })
 const Mul = createToken({ name: "Mul", pattern: /\*/ })
@@ -47,93 +50,60 @@ class TinyCParser extends CstParser {
     // not mandatory, using $ (or any other sign) to reduce verbosity (this. this. this. this. .......)
     const $ = this
 
-    $.RULE("program", () => {
+    $.RULE("start", () => {
       $.MANY(() => {
-        $.SUBRULE($.statement)
+        $.SUBRULE($.expression)
       })
-    })
-
-    $.RULE("statement", () => {
-      $.OR([
-        { ALT: () => $.SUBRULE($.blockStatement) },
-        { ALT: () => $.SUBRULE($.expressionStatement) },
-        { ALT: () => $.SUBRULE($.emptyStatement) }
-      ])
-    })
-
-    $.RULE("blockStatement", () => {
-      $.CONSUME(LCurly)
-      $.MANY(() => {
-        $.SUBRULE($.statement)
-      })
-      $.CONSUME(RCurly)
-    })
-
-    $.RULE("expressionStatement", () => {
-      $.SUBRULE($.expression)
-      $.CONSUME(SemiColon)
     })
 
     $.RULE("expression", () => {
       $.OR([
-        { ALT: () => $.SUBRULE($.assignExpression) },
-        { ALT: () => $.SUBRULE($.relationExpression) }
+        { ALT: () => $.SUBRULE($.accessorExpression) },
+        { ALT: () => $.SUBRULE($.relationExpression) },
+        // { ALT: () => $.SUBRULE($.groupExpression) }
       ])
     })
 
     $.RULE("relationExpression", () => {
-      $.SUBRULE($.AdditionExpression)
-      $.MANY(() => {
-        $.CONSUME(LessThan)
-        $.SUBRULE2($.AdditionExpression)
-      })
-    })
-
-    $.RULE("AdditionExpression", () => {
-      $.SUBRULE($.term)
-      $.MANY(() => {
-        $.OR([{ ALT: () => $.CONSUME(Plus) }, { ALT: () => $.CONSUME(Minus) }])
-        $.SUBRULE2($.term)
-      })
-    })
-
-    $.RULE("MultiplyExpression", () => {
-      $.SUBRULE($.term)
-      $.MANY(() => {
-        $.OR([{ ALT: () => $.CONSUME(Mul) }, { ALT: () => $.CONSUME(Div) }])
-        $.SUBRULE2($.term)
-      })
-    })
-
-    $.RULE("assignExpression", () => {
       $.CONSUME(ID)
-      $.CONSUME(Equals)
-      $.SUBRULE($.expression)
+      $.MANY(() => {
+        $.OR([
+          { ALT: () => $.CONSUME(LessThan) }, 
+          { ALT: () => $.CONSUME(GreaterThan) },
+          { ALT: () => $.CONSUME(Equals) },
+          { ALT: () => $.CONSUME(NotEquals) }
+        ])
+        $.SUBRULE2($.expression)
+      })
     })
+
+    // $.RULE("AdditionExpression", () => {
+    //   $.CONSUME(ID)
+    //   $.MANY(() => {
+    //     $.OR([{ ALT: () => $.CONSUME(Plus) }, { ALT: () => $.CONSUME(Minus) }])
+    //     $.SUBRULE2($.expression)
+    //   })
+    // })
+
+    // $.RULE("MultiplyExpression", () => {
+    //   $.CONSUME(ID)
+    //   $.MANY(() => {
+    //     $.OR([{ ALT: () => $.CONSUME(Mul) }, { ALT: () => $.CONSUME(Div) }])
+    //     $.SUBRULE2($.expression)
+    //   })
+    // })
 
     $.RULE("accessorExpression", () => {
-      $.CONSUME($.expression)
-      $.CONSUME(Equals)
+      $.CONSUME(ID)
+      $.CONSUME(Dot)
       $.SUBRULE($.expression)
     })
 
-    $.RULE("term", () => {
-      $.OR([
-        { ALT: () => $.CONSUME(ID) },
-        { ALT: () => $.CONSUME(INT) },
-        { ALT: () => $.SUBRULE($.paren_expr) }
-      ])
-    })
-
-    $.RULE("paren_expr", () => {
-      $.CONSUME(LParen)
-      $.SUBRULE($.expression)
-      $.CONSUME(RParen)
-    })
-
-    $.RULE("emptyStatement", () => {
-      $.CONSUME(SemiColon)
-    })
+    // $.RULE("groupExpression", () => {
+    //   $.CONSUME(LParen)
+    //   $.SUBRULE($.expression)
+    //   $.CONSUME(RParen)
+    // })
 
     // very important to call this after all the rules have been defined.
     // otherwise the parser may not work correctly as it will lack information
@@ -150,6 +120,7 @@ const parser = new TinyCParser()
 module.exports = function () {
   return {
       lexer: TinyCLexer,
-      parser: parser
+      parser: parser,
+      ID: ID
   }
 }

@@ -1,4 +1,6 @@
 const suggestions = require("./parserSuggestions")
 
-s = suggestions.getSuggestions('{i=5;if (i<10) { while (x');
+var symbols = ["Immo", "Appartment"];
+
+s = suggestions.getSuggestions('Immo.Appa', symbols);
 console.log(JSON.stringify(s,null, 2))
