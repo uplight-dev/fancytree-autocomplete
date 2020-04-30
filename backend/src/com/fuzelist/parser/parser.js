@@ -23,6 +23,8 @@ const LParen = createToken({ name: "LParen", pattern: /\(/ })
 const RParen = createToken({ name: "RParen", pattern: /\)/ })
 const SemiColon = createToken({ name: "SemiColon", pattern: /;/ })
 const Dot = createToken({ name: "Dot", pattern: /\./ })
+const And = createToken({ name: "And", pattern: /and/ })
+const Or = createToken({ name: "Or", pattern: /or/ })
 const Equals = createToken({ name: "Equals", pattern: /=/ })
 const NotEquals = createToken({ name: "NotEquals", pattern: /!=/ })
 const LessThan = createToken({ name: "LessThan", pattern: /</ })
@@ -58,13 +60,22 @@ class TinyCParser extends CstParser {
 
     $.RULE("expression", () => {
       $.OR([
-        { ALT: () => $.SUBRULE($.accessorExpression) },
-        { ALT: () => $.SUBRULE($.relationExpression) },
-        // { ALT: () => $.SUBRULE($.groupExpression) }
+        { ALT: () => $.SUBRULE($.logical) }
       ])
     })
 
-    $.RULE("relationExpression", () => {
+    $.RULE("logical", () => {
+      $.CONSUME(ID)
+      $.MANY(() => {
+        $.OR([
+          { ALT: () => $.CONSUME(And) }, 
+          { ALT: () => $.CONSUME(Or) }
+        ])
+        $.SUBRULE2($.expression)
+      })
+    })
+
+    $.RULE("comparison", () => {
       $.CONSUME(ID)
       $.MANY(() => {
         $.OR([
@@ -77,23 +88,20 @@ class TinyCParser extends CstParser {
       })
     })
 
-    // $.RULE("AdditionExpression", () => {
-    //   $.CONSUME(ID)
-    //   $.MANY(() => {
-    //     $.OR([{ ALT: () => $.CONSUME(Plus) }, { ALT: () => $.CONSUME(Minus) }])
-    //     $.SUBRULE2($.expression)
-    //   })
-    // })
+    $.RULE("math", () => {
+      $.CONSUME(ID)
+      $.MANY(() => {
+        $.OR([
+          { ALT: () => $.CONSUME(Plus) }, 
+          { ALT: () => $.CONSUME(Minus) },
+          { ALT: () => $.CONSUME(Mul) },
+          { ALT: () => $.CONSUME(Div) }
+        ])
+        $.SUBRULE2($.expression)
+      })
+    })
 
-    // $.RULE("MultiplyExpression", () => {
-    //   $.CONSUME(ID)
-    //   $.MANY(() => {
-    //     $.OR([{ ALT: () => $.CONSUME(Mul) }, { ALT: () => $.CONSUME(Div) }])
-    //     $.SUBRULE2($.expression)
-    //   })
-    // })
-
-    $.RULE("accessorExpression", () => {
+    $.RULE("accessor", () => {
       $.CONSUME(ID)
       $.CONSUME(Dot)
       $.SUBRULE($.expression)
