@@ -1,12 +1,3 @@
-/*
- * Example Of using Chevrotain's built in syntactic content assist
- * To implement semantic content assist and content assist on partial inputs.
- *
- * Examples:
- * "Public static " --> ["function"]
- * "Public sta" --> ["static"]
- * "call f" --> ["foo"] // assuming foo is in the symbol table.
- */
 const _ = require("lodash")
 const {
   createToken,
@@ -16,41 +7,21 @@ const {
   EMPTY_ALT
 } = require("chevrotain")
 
-const parser = require("./parser")()
-
-// function getContentAssistSuggestions(text) {
-//   const lexResult = parser.lexer.tokenize(text)
-//   if (lexResult.errors.length > 0) {
-//     throw new Error("sad sad panda, lexing errors detected")
-//   }
-//   const partialTokenVector = lexResult.tokens
-
-//   const syntacticSuggestions = parser.parser.computeContentAssist(
-//     "program",
-//     partialTokenVector
-//   )
-
-//   // The suggestions also include the context, we are only interested
-//   // in the TokenTypes in this example.
-//   const tokenTypesSuggestions = syntacticSuggestions.map(
-//     (suggestion) => suggestion.nextTokenType
-//   )
-
-//   return tokenTypesSuggestions
-// }
+const {lexer, Parser, ID} = require("./parser")
 
 /**
  * @param text {string} - The text content assist is requested immediately afterwards.
  * @param symbolTable {string[]} - List of available symbol names.
  */
 function getContentAssistSuggestions(text, symbolFinder) {
-  const lexResult = parser.lexer.tokenize(text)
+  var parser = new Parser()
+  const lexResult = lexer.tokenize(text)
   if (lexResult.errors.length > 0) {
     throw new Error("sad sad panda, lexing errors detected")
   }
 
-  parser.parser.input = lexResult.tokens;
-  let parsed = parser.parser.start();
+  parser.input = lexResult.tokens;
+  let parsed = parser.start();
 
   const lastInputToken = _.last(lexResult.tokens)
   let partialSuggestionMode = false
@@ -59,14 +30,14 @@ function getContentAssistSuggestions(text, symbolFinder) {
   // we have requested assistance while inside a Keyword or Identifier
   if (
     lastInputToken !== undefined &&
-    (tokenMatcher(lastInputToken, parser.ID)) &&
+    (tokenMatcher(lastInputToken, ID)) &&
     /\w/.test(text[text.length - 1])
   ) {
     assistanceTokenVector = _.dropRight(assistanceTokenVector)
     partialSuggestionMode = true
   }
 
-  const syntacticSuggestions = parser.parser.computeContentAssist(
+  const syntacticSuggestions = parser.computeContentAssist(
     "start",
     assistanceTokenVector
   )
@@ -77,9 +48,8 @@ function getContentAssistSuggestions(text, symbolFinder) {
     const currSyntaxSuggestion = syntacticSuggestions[i]
     const currTokenType = currSyntaxSuggestion.nextTokenType
     const currRuleStack = currSyntaxSuggestion.ruleStack
-    const lastRuleName = _.last(currRuleStack)
 
-    if (currTokenType === parser.ID) {
+    if (currTokenType === ID) {
       let symbols = symbolFinder(currRuleStack);
       finalSuggestions = finalSuggestions.concat(symbols);
     } else {

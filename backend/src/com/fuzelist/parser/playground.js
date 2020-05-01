@@ -1,17 +1,19 @@
-//http://sap.github.io/chevrotain/playground/?example=JSON%20grammar%20only
+/*
+http://sap.github.io/chevrotain/playground/?example=JSON%20grammar%20only
+(Immo.loc ~ [WSL,WSP] or Immo.loc = Etterbeek) and (Immo.date > #now)
 
-(function calculatorExampleCst() {
+https://github.com/SAP/chevrotain/issues/807
+https://github.com/SAP/chevrotain/blob/0a2caa4b440b6ee239f2500b51c010cdb98faf55/examples/grammars/ecma5/ecma5_parser.js#L258-L285
+https://www.ecma-international.org/ecma-262/5.1/index.html#sec-11.1.4
+https://github.com/SAP/chevrotain/blob/0a2caa4b440b6ee239f2500b51c010cdb98faf55/examples/grammars/ecma5/ecma5_tokens.js
+https://github.com/SAP/chevrotain/blob/0a2caa4b440b6ee239f2500b51c010cdb98faf55/examples/grammars/ecma5/ecma5_lexer.js
+https://github.com/acornjs/acorn/blob/master/acorn/src/tokentype.js
+https://sap.github.io/chevrotain/documentation/7_0_1/interfaces/tokentype.html
+https://github.com/SAP/chevrotain/blob/711f8692/packages/chevrotain/api.d.ts#L1633
+*/
+
+(function fuzeListCst() {
   "use strict";
-  /**
-   * An Example of implementing a Calculator with separated grammar and semantics (actions).
-   * This separation makes it easier to maintain the grammar and reuse it in different use cases.
-   *
-   * This is accomplished by using the automatic CST (Concrete Syntax Tree) output capabilities
-   * of chevrotain.
-   *
-   * See farther details here:
-   * https://github.com/SAP/chevrotain/blob/master/docs/concrete_syntax_tree.md
-   */
 
 const { Lexer, CstParser } = chevrotain
 
@@ -35,11 +37,16 @@ const LCurly = createToken({ name: "LCurly", pattern: /{/ })
 const RCurly = createToken({ name: "RCurly", pattern: /}/ })
 const LParen = createToken({ name: "LParen", pattern: /\(/ })
 const RParen = createToken({ name: "RParen", pattern: /\)/ })
+const LBracket = createToken({ name: "LBracket", pattern: /\[/ })
+const RBracket = createToken({ name: "RBracket", pattern: /\]/ })
 const SemiColon = createToken({ name: "SemiColon", pattern: /;/ })
+const Comma = createToken({ name: "Comma", pattern: /,/ })
+const Diez = createToken({ name: "Diez", pattern: /#/ })
 const Dot = createToken({ name: "Dot", pattern: /\./ })
 const And = createToken({ name: "And", pattern: /and/ })
 const Or = createToken({ name: "Or", pattern: /or/ })
 const Equals = createToken({ name: "Equals", pattern: /=/ })
+const Tilde = createToken({ name: "Tilde", pattern: /~/ })
 const NotEquals = createToken({ name: "NotEquals", pattern: /!=/ })
 const LessThan = createToken({ name: "LessThan", pattern: /</ })
 const GreaterThan = createToken({ name: "GreaterThan", pattern: />/ })
@@ -51,11 +58,11 @@ const INT = createToken({ name: "Int", pattern: /[+-]?(([1-9](_\d|\d)*)|0)/ })
 // TODO: resolve ambiguity keywords vs identifiers
 const ID = createToken({ name: "ID", pattern: /[A-Za-z0-9_-]+/ })
 
-const TinyCLexer = new Lexer(allTokens)
+const FLLexer = new Lexer(allTokens)
 
 // ----------------- parser -----------------
 
-class TinyCParser extends CstParser {
+class FLParser extends CstParser {
   // Unfortunately no support for class fields with initializer in ES2015, only in esNext...
   // so the parsing rules are defined inside the constructor, as each parsing rule must be initialized by
   // invoking RULE(...)
@@ -63,7 +70,6 @@ class TinyCParser extends CstParser {
   constructor() {
     super(allTokens)
 
-    // not mandatory, using $ (or any other sign) to reduce verbosity (this. this. this. this. .......)
     const $ = this
 
     $.RULE("start", () => {
@@ -73,67 +79,38 @@ class TinyCParser extends CstParser {
     })
 
     $.RULE("expression", () => {
-      $.SUBRULE($.logicOr)
+      $.SUBRULE($.binary)
     })
 
-    $.RULE("logicOr", () => {
-      $.SUBRULE($.logicAnd)
-      $.MANY(() => {
-        $.CONSUME(Or)
-        $.SUBRULE2($.logicAnd)
-      });
-    })
-
-    $.RULE("logicAnd", () => {
-      $.SUBRULE($.comparison)
-      $.MANY(() => {
-        $.CONSUME(And)
-        $.SUBRULE2($.comparison)
-      })
-    })
-
-    
-    $.RULE("comparison", () => {
-      $.SUBRULE($.add)
-      $.MANY(() => {
-        $.OR([
-          { ALT: () => $.CONSUME(LessThan) }, 
-          { ALT: () => $.CONSUME(GreaterThan) },
-          { ALT: () => $.CONSUME(Equals) },
-          { ALT: () => $.CONSUME(NotEquals) }
-        ])
-        $.SUBRULE2($.add)
-      })
-    })
-
-    $.RULE("add", () => {
-      $.SUBRULE($.mul)
-      $.MANY(() => {
-        $.OR([
-          { ALT: () => $.CONSUME(Plus) }, 
-          { ALT: () => $.CONSUME(Minus) },
-        ])
-        $.SUBRULE2($.mul)
-      })
-    })
-    
-    $.RULE("mul", () => {
+    $.RULE("binary", () => {
       $.SUBRULE($.term)
       $.MANY(() => {
         $.OR([
+          { ALT: () => $.CONSUME(And)},
+          { ALT: () => $.CONSUME(Or)},
+          { ALT: () => $.CONSUME(LessThan) }, 
+          { ALT: () => $.CONSUME(GreaterThan) },
+          { ALT: () => $.CONSUME(Equals) },
+          { ALT: () => $.CONSUME(NotEquals) },
+          { ALT: () => $.CONSUME(Plus) }, 
+          { ALT: () => $.CONSUME(Minus) },
           { ALT: () => $.CONSUME(Mul) }, 
           { ALT: () => $.CONSUME(Div) },
+          //X in <array> => X ~ <array>
+          { ALT: () => $.CONSUME(Tilde) },
         ])
         $.SUBRULE2($.term)
-      })
+      });
     })
-    
+
     $.RULE("term", () => {
       $.OR([
         { ALT: () => $.SUBRULE($.group) },
         { ALT: () => $.SUBRULE($.accessor) },
+        { ALT: () => $.SUBRULE($.array) },
+        { ALT: () => $.SUBRULE($.fn) },
         { ALT: () => $.CONSUME(ID) },
-        { ALT: () => $.CONSUME(INT) }
+        { ALT: () => $.CONSUME(INT) },
       ])
     })
     
@@ -142,11 +119,33 @@ class TinyCParser extends CstParser {
       $.CONSUME(Dot)
       $.SUBRULE($.expression)
     })
+    
+    $.RULE("array", () => {
+      $.CONSUME(LBracket)
+      $.MANY(() => {
+        $.CONSUME(ID)
+        $.OPTION(() => {
+          $.SUBRULE($.elision)
+        })
+      })
+      $.CONSUME(RBracket)
+    })
 
     $.RULE("group", () => {
       $.CONSUME(LParen)
       $.SUBRULE($.expression)
       $.CONSUME(RParen)
+    })
+    
+    $.RULE("fn", () => {
+      $.CONSUME(Diez)
+      $.CONSUME(ID)
+    })
+    
+    $.RULE("elision", () => {
+      $.AT_LEAST_ONE(() => {
+        $.CONSUME(Comma)
+      })
     })
 
     // very important to call this after all the rules have been defined.
@@ -159,11 +158,11 @@ class TinyCParser extends CstParser {
 // ----------------- wrapping it all together -----------------
 
 // reuse the same parser instance.
-const parser = new TinyCParser()
+const parser = new FLParser()
 
   return {
-      lexer: TinyCLexer,
-      parser: TinyCParser,
+      lexer: FLLexer,
+      parser: FLParser,
       defaultRule: 'start'
   }
   
