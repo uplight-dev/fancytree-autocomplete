@@ -21,11 +21,15 @@ function getContentAssistSuggestions(text, symbolFinder) {
   }
 
   parser.input = lexResult.tokens;
-  let parsed = parser.start();
 
   const lastInputToken = _.last(lexResult.tokens)
-  let partialSuggestionMode = false
-  let assistanceTokenVector = lexResult.tokens
+  let partialMode = false
+  let assistTokens = lexResult.tokens
+
+  let suggestions = parser.computeContentAssist(
+    "start",
+    assistTokens
+  )
 
   // we have requested assistance while inside a Keyword or Identifier
   if (
@@ -33,39 +37,43 @@ function getContentAssistSuggestions(text, symbolFinder) {
     (tokenMatcher(lastInputToken, ID)) &&
     /\w/.test(text[text.length - 1])
   ) {
-    assistanceTokenVector = _.dropRight(assistanceTokenVector)
-    partialSuggestionMode = true
+    assistTokens = _.dropRight(assistTokens)
+    //redo suggestions with the last ID Token included and aggregate
+    const suggestions2 = parser.computeContentAssist(
+      "start",
+      assistTokens
+    )
+    suggestions = suggestions.concat(suggestions2)
+
+    partialMode = true
   }
 
-  const syntacticSuggestions = parser.computeContentAssist(
-    "start",
-    assistanceTokenVector
-  )
+  let outSuggestions = []
+  let outIdSuggestions = []
 
-  let finalSuggestions = []
+  for (let i = 0; i < suggestions.length; i++) {
+    const cSuggestion = suggestions[i]
+    const cTokenType = cSuggestion.nextTokenType
+    const cRuleStack = cSuggestion.ruleStack
 
-  for (let i = 0; i < syntacticSuggestions.length; i++) {
-    const currSyntaxSuggestion = syntacticSuggestions[i]
-    const currTokenType = currSyntaxSuggestion.nextTokenType
-    const currRuleStack = currSyntaxSuggestion.ruleStack
-
-    if (currTokenType === ID) {
-      let symbols = symbolFinder(currRuleStack);
-      finalSuggestions = finalSuggestions.concat(symbols);
+    if (cTokenType === ID) {
+      let symbols = symbolFinder(cRuleStack);
+      outIdSuggestions = outSuggestions.concat(symbols);
     } else {
-      finalSuggestions.push(currTokenType.PATTERN.source);
+      outSuggestions.push(cTokenType.LABEL || cTokenType.PATTERN.source.replace('\\', ''));
     }
   }
 
   // throw away any suggestion that is not a suffix of the last partialToken.
-  if (partialSuggestionMode) {
-    finalSuggestions = _.filter(finalSuggestions, (currSuggestion) => {
-      return _.startsWith(currSuggestion, lastInputToken.image)
+  if (partialMode) {
+    outIdSuggestions = _.filter(outIdSuggestions, (s) => {
+      return _.startsWith(s, lastInputToken.image)
     })
   }
 
+  outSuggestions = outSuggestions.concat(outIdSuggestions)
   // we could have duplication because each suggestion also includes a Path, and the same Token may appear in multiple suggested paths.
-  return _.uniq(finalSuggestions)
+  return _.uniq(outSuggestions)
 }
 
 module.exports = {

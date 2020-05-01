@@ -53,9 +53,10 @@ const FLParser = function(chevrotain) {
   const Minus = createToken({ name: "Minus", pattern: /-/ })
   const Mul = createToken({ name: "Mul", pattern: /\*/ })
   const Div = createToken({ name: "Div", pattern: /\// })
-  const INT = createToken({ name: "Int", pattern: /[+-]?(([1-9](_\d|\d)*)|0)/ })
+  const INT = createToken({ name: "Int", pattern: /[+-]?(([1-9](_\d|\d)*)|0)/, label: "Integer" })
   // TODO: resolve ambiguity keywords vs identifiers
-  const ID = createToken({ name: "ID", pattern: /[A-Za-z0-9_-]+/ })
+  const ID = createToken({ name: "ID", pattern: /[A-Za-z0-9_-]+/, label: "ID" })
+  const FnID = createToken({ name: "FnID", pattern: /#[A-Za-z0-9_-]+/, label: "FN" })
   
   const flLexer = new Lexer(allTokens)
   
@@ -78,7 +79,10 @@ const FLParser = function(chevrotain) {
       })
   
       $.RULE("expression", () => {
-        $.SUBRULE($.binary)
+        $.OR([
+          //{ ALT: () => $.SUBRULE($.arrayBinary) },
+          { ALT: () => $.SUBRULE($.binary) }
+        ])
       })
   
       $.RULE("binary", () => {
@@ -95,8 +99,7 @@ const FLParser = function(chevrotain) {
             { ALT: () => $.CONSUME(Minus) },
             { ALT: () => $.CONSUME(Mul) }, 
             { ALT: () => $.CONSUME(Div) },
-            //X in <array> => X ~ <array>
-            { ALT: () => $.CONSUME(Tilde) },
+            { ALT: () => $.CONSUME(Tilde) }
           ])
           $.SUBRULE2($.term)
         });
@@ -105,27 +108,33 @@ const FLParser = function(chevrotain) {
       $.RULE("term", () => {
         $.OR([
           { ALT: () => $.SUBRULE($.group) },
-          { ALT: () => $.SUBRULE($.accessor) },
+          { ALT: () => $.SUBRULE($.property) },
           { ALT: () => $.SUBRULE($.array) },
           { ALT: () => $.SUBRULE($.fn) },
-          { ALT: () => $.CONSUME(ID) },
           { ALT: () => $.CONSUME(INT) },
         ])
       })
       
-      $.RULE("accessor", () => {
+      $.RULE("property", () => {
         $.CONSUME(ID)
-        $.CONSUME(Dot)
-        $.SUBRULE($.expression)
+        $.MANY(() => {
+        	$.CONSUME(Dot)
+        	$.SUBRULE($.property)
+        })
+      })
+      
+      $.RULE("arrayBinary", () => {
+        $.SUBRULE($.property)
+        $.CONSUME(Tilde)
+        $.SUBRULE2($.array)
       })
       
       $.RULE("array", () => {
         $.CONSUME(LBracket)
+        $.CONSUME(ID)
         $.MANY(() => {
-          $.CONSUME(ID)
-          $.OPTION(() => {
-            $.SUBRULE($.elision)
-          })
+          $.SUBRULE($.elision)
+          $.CONSUME2(ID)
         })
         $.CONSUME(RBracket)
       })
@@ -137,14 +146,11 @@ const FLParser = function(chevrotain) {
       })
       
       $.RULE("fn", () => {
-        $.CONSUME(Diez)
-        $.CONSUME(ID)
+        $.CONSUME(FnID)
       })
       
       $.RULE("elision", () => {
-        $.AT_LEAST_ONE(() => {
-          $.CONSUME(Comma)
-        })
+        $.CONSUME(Comma)
       })
   
       // very important to call this after all the rules have been defined.
@@ -164,14 +170,14 @@ const FLParser = function(chevrotain) {
   }
     
     
-  }
-  
-  //http://sap.github.io/chevrotain/playground/?example=JSON%20grammar%20only
-  //to use this, uncomment: 
-  // FLParser(chevrotain)
+}
 
-  //and comment:
-  module.exports = FLParser
+
+//FLParser(chevrotain)  
+
+
+//don't paste this to http://sap.github.io/chevrotain/playground/
+module.exports = FLParser
   
   
   
