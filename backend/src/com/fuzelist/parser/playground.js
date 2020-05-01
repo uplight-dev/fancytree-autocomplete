@@ -1,4 +1,5 @@
 //http://sap.github.io/chevrotain/playground/?example=JSON%20grammar%20only
+//(Immo.loc ~ [WSL,WSP] or Immo.loc = Etterbeek) and (Immo.date > #now)
 
 (function calculatorExampleCst() {
     "use strict";
