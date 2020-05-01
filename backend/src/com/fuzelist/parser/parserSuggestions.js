@@ -58,7 +58,7 @@ function getContentAssistSuggestions(text, symbolFinder) {
 
     if (cTokenType === ID) {
       let symbols = symbolFinder(cRuleStack);
-      outIdSuggestions = outSuggestions.concat(symbols);
+      outIdSuggestions = outIdSuggestions.concat(symbols);
     } else {
       outSuggestions.push(cTokenType.LABEL || cTokenType.PATTERN.source.replace('\\', ''));
     }
@@ -71,7 +71,7 @@ function getContentAssistSuggestions(text, symbolFinder) {
     })
   }
 
-  outSuggestions = outSuggestions.concat(outIdSuggestions)
+  outSuggestions = outIdSuggestions.concat(outSuggestions)
   // we could have duplication because each suggestion also includes a Path, and the same Token may appear in multiple suggested paths.
   return _.uniq(outSuggestions)
 }
